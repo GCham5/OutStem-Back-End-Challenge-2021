@@ -7,16 +7,29 @@ using System.Threading.Tasks;
 namespace Frank_Workshop
 {
     public class Recipe
-    {  
+    {
+        public Recipe()
+        {
+
+        }
+        //public Recipe(Guid Author, bool IsPrivate, bool IsPremium )
+        //{
+        //    this.Author = Author;
+        //    this.IsPrivate = IsPrivate;
+        //    this.IsPremium = IsPremium;
+        //}
+
         [Key]
-        public Guid Id { get; set; }
+        public int Id { get; set; }
         public DateTime DateCreated { get; set; }
         public DateTime DateLastUpdated { get; set; }
         public Guid Author { get; set; }
+        [Required]
         public string Content { get; set; }
         public string Category { get; set; }
-        public bool IsPrivate { get; set; }
-        public bool IsPremium { get; set; }
+        public bool IsPrivate { get; set; } = true;
+        public bool IsPremium { get; set; } = false;
         public bool IsDeleted { get; set; }
+
     }
 }

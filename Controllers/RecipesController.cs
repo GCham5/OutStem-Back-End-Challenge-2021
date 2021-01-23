@@ -1,5 +1,6 @@
 ﻿using Frank_Workshop.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,16 +41,54 @@ namespace Frank_Workshop.Controllers
         [HttpPost]
         public async Task<ActionResult> Post([FromBody] Recipe newRecipe) 
         {
-            _context.Recipe.Add(newRecipe);
-            await _context.SaveChangesAsync();
+            if (ModelState.IsValid)
+            {
+                Recipe recipe = new Recipe
+                {
+                    Id = new Random().Next(100),
+                    Author = Guid.NewGuid(),
+                    Content = newRecipe.Content,
+                    Category = newRecipe.Category,
+                    IsPrivate = newRecipe.IsPrivate,
+                    IsPremium = newRecipe.IsPrivate,
+                };
+                _context.Recipe.Add(recipe);
+                await _context.SaveChangesAsync();
 
-            return Ok();
+                return Ok();
+            }
+
+            return BadRequest("Invalid model");
+           
         }
 
         // PUT api/<RecipesController>/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        public async Task<ActionResult> Put(int id, [FromBody] Recipe recipe)
         {
+            if(id == recipe.Id)
+            {
+                _context.Entry(recipe).State = EntityState.Modified;
+
+                try
+                {
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    var currentRecipe = await _context.Recipe.FirstOrDefaultAsync(x => x.Id == id);
+                    if ( currentRecipe == null)
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+            }
+
+            return BadRequest("Recipe does not exist");
         }
 
         // DELETE api/<RecipesController>/5
