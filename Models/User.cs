@@ -9,8 +9,8 @@ namespace Frank_Workshop.Models
     public class User : IdentityUser<Guid>
     {
 
-        public string FirstName;
-        public string LastName;
-        public bool IsPremium;
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public bool IsPremium { get; set; }
     }
 }

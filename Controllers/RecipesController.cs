@@ -38,8 +38,12 @@ namespace Frank_Workshop.Controllers
 
         // POST api/<RecipesController>
         [HttpPost]
-        public void Post([FromBody] string value)
+        public async Task<ActionResult> Post([FromBody] Recipe newRecipe) 
         {
+            _context.Recipe.Add(newRecipe);
+            await _context.SaveChangesAsync();
+
+            return Ok();
         }
 
         // PUT api/<RecipesController>/5

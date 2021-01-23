@@ -16,10 +16,10 @@ namespace Frank_Workshop.Models
         public virtual DbSet<Recipe> Recipe { get; set; }
         public virtual DbSet<User> User { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<Recipe>()
-                .HasKey(r => r.Id);
-        }
+        //protected override void OnModelCreating(ModelBuilder modelBuilder)
+        //{
+        //    modelBuilder.Entity<Recipe>()
+        //        .HasKey(r => r.Id);
+        //}
     }
 }
