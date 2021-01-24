@@ -20,7 +20,7 @@ namespace Frank_Workshop
         //}
 
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public DateTime DateCreated { get; set; }
         public DateTime DateLastUpdated { get; set; }
         public Guid Author { get; set; }

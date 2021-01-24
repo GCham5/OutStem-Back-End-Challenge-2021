@@ -1,4 +1,5 @@
 ﻿using Frank_Workshop.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -24,7 +25,7 @@ namespace Frank_Workshop.Controllers
 
         // GET: api/<RecipesController>
         [HttpGet]
-        public ActionResult<ICollection<Object>> Get()
+        public ActionResult<ICollection<Object>> Get(Guid requester)
         {
             var recipes = _context.Recipe;
             return Ok(recipes);
@@ -45,17 +46,19 @@ namespace Frank_Workshop.Controllers
             {
                 Recipe recipe = new Recipe
                 {
-                    Id = new Random().Next(100),
-                    Author = Guid.NewGuid(),
+                    Author = newRecipe.Author,
                     Content = newRecipe.Content,
                     Category = newRecipe.Category,
                     IsPrivate = newRecipe.IsPrivate,
                     IsPremium = newRecipe.IsPrivate,
+                    DateCreated = DateTime.Now,
+                    DateLastUpdated = DateTime.Now
                 };
+
                 _context.Recipe.Add(recipe);
                 await _context.SaveChangesAsync();
 
-                return Ok();
+                return StatusCode(StatusCodes.Status201Created);
             }
 
             return BadRequest("Invalid model");
@@ -64,28 +67,32 @@ namespace Frank_Workshop.Controllers
 
         // PUT api/<RecipesController>/5
         [HttpPut("{id}")]
-        public async Task<ActionResult> Put(int id, [FromBody] Recipe recipe)
+        public async Task<ActionResult> Put(Guid id, [FromBody] Recipe recipe)
         {
             if(id == recipe.Id)
             {
-                _context.Entry(recipe).State = EntityState.Modified;
+                var currentRecipe = await _context.Recipe.FirstOrDefaultAsync(x => x.Id == id);
 
-                try
+                if(currentRecipe == null)
                 {
-                    await _context.SaveChangesAsync();
+                    return NotFound("Recipe not found");
                 }
-                catch (DbUpdateConcurrencyException)
+
+                if(currentRecipe.Author != recipe.Author)
                 {
-                    var currentRecipe = await _context.Recipe.FirstOrDefaultAsync(x => x.Id == id);
-                    if ( currentRecipe == null)
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    return Unauthorized();
                 }
+
+                currentRecipe.Content = recipe.Content;
+                currentRecipe.Category = recipe.Category;
+                currentRecipe.IsPremium = recipe.IsPremium;
+                currentRecipe.IsPrivate = recipe.IsPrivate;
+                currentRecipe.DateLastUpdated = DateTime.Now;
+
+  
+                await _context.SaveChangesAsync();
+                return Ok();
+
             }
 
             return BadRequest("Recipe does not exist");
@@ -93,8 +100,22 @@ namespace Frank_Workshop.Controllers
 
         // DELETE api/<RecipesController>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public async Task<ActionResult> Delete(Guid id, Guid Author)
         {
+            var recipeToDelete = await _context.Recipe.FirstOrDefaultAsync(x => x.Id == id);
+
+            if (recipeToDelete == null)
+            {
+                return NotFound("Recipe not found");
+            }
+
+            if (recipeToDelete.Author != Author)
+            {
+                return Unauthorized();
+            }
+
+            _context.Recipe.Remove(recipeToDelete);
+            return Ok();
         }
     }
 }
