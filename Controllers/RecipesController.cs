@@ -25,17 +25,81 @@ namespace Frank_Workshop.Controllers
 
         // GET: api/<RecipesController>
         [HttpGet]
-        public ActionResult<ICollection<Object>> Get(Guid requester)
+        public async Task<ActionResult<Object>> Get ([FromBody] Guid requester)
         {
+           
             var recipes = _context.Recipe;
-            return Ok(recipes);
+            List<Recipe> recipesToSend = new List<Recipe>();
+
+            if(recipes == null)
+            {
+                return BadRequest("Could not find any recipes");
+            }
+  
+            foreach(var recipe in recipes)
+            {
+                if (!recipe.IsDeleted)
+                {
+                    if (recipe.IsPrivate)
+                    {
+                        if (recipe.Author == requester)
+                        {
+                            recipesToSend.Add(recipe);
+                        }
+                    }
+                    else if (recipe.IsPremium)
+                    {
+                        var user = await _context.User.FirstOrDefaultAsync(x => x.Id == requester);
+                        if (user.IsPremium)
+                        {
+                            recipesToSend.Add(recipe);
+                        }
+                    }
+                    else
+                    {
+                        recipesToSend.Add(recipe);
+                    }
+                }
+               
+            }
+       
+            return Ok(recipesToSend);
         }
 
         // GET api/<RecipesController>/5
         [HttpGet("{id}")]
-        public string Get(int id)
+        public async Task<ActionResult> Get(Guid id, [FromBody] Guid requester)
         {
-            return "value";
+            var user = await _context.User.FirstOrDefaultAsync(x => x.Id == requester);
+            var recipe = await _context.Recipe.FirstOrDefaultAsync(r => r.Id == id);
+
+            if(recipe == null)
+            {
+                return BadRequest("Recipe not found");
+            }
+
+            if (recipe.IsDeleted)
+            {
+                return BadRequest("Recipe unavailable");
+            }
+
+            if (recipe.IsPrivate)
+            {
+                if (recipe.Author == requester)
+                {
+                    return Ok(recipe);
+                }
+            }
+
+            if (recipe.IsPremium)
+            {
+                if (user.IsPremium)
+                {
+                    return Ok(recipe);
+                }
+            }
+
+            return BadRequest("Recipe unavailable");
         }
 
         // POST api/<RecipesController>
@@ -100,7 +164,7 @@ namespace Frank_Workshop.Controllers
 
         // DELETE api/<RecipesController>/5
         [HttpDelete("{id}")]
-        public async Task<ActionResult> Delete(Guid id, Guid Author)
+        public async Task<ActionResult> Delete(Guid id, [FromBody] Guid Author)
         {
             var recipeToDelete = await _context.Recipe.FirstOrDefaultAsync(x => x.Id == id);
 
@@ -114,7 +178,7 @@ namespace Frank_Workshop.Controllers
                 return Unauthorized();
             }
 
-            _context.Recipe.Remove(recipeToDelete);
+            recipeToDelete.IsDeleted = true;
             return Ok();
         }
     }
